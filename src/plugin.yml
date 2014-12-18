@@ -1,0 +1,13 @@
+name: InventorySeparator
+
+main: com.github.jikoo.inventoryseparator.InventorySeparator
+version: 1.0.0
+author: Jikoo
+
+commands:
+  inventoryseparator:
+    permission: inventoryseparator.use
+
+permissions:
+  inventoryseparator.ignoregamemode: false
+  inventoryseparator.ignoreinventoryswap: false

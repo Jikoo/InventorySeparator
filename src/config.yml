@@ -1,0 +1,19 @@
+groups:
+  default:
+    gamemode: SURVIVAL
+    worlds:
+    - world
+    - world_nether
+    - world_the_end
+  creative:
+    gamemode: CREATIVE
+    worlds:
+    - creative
+  adventure:
+    gamemode: ADVENTURE
+    worlds:
+    - challenge_map
+  spectate:
+    gamemode: SPECTATOR
+    worlds:
+    - nice_builds
