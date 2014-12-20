@@ -51,6 +51,13 @@ public class InventoryGroup {
 		return userFile;
 	}
 
+	/**
+	 * Change a player's inventory to another GameMode's inventory.
+	 * N.B. This does not save their current inventory!
+	 * 
+	 * @param player the Player whose inventory is to be changed
+	 * @param gameMode the GameMode to load inventory for
+	 */
 	public void changePlayerInventory(Player player, GameMode gameMode) {
 		// TODO
 	}

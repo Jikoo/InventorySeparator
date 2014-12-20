@@ -81,15 +81,18 @@ public class InventorySeparator extends JavaPlugin {
 			if (byWorld.containsKey(worldName)) {
 				continue;
 			}
-			InventoryGroup group = new InventoryGroup(worldName, getServer().getDefaultGameMode());
-			getLogger().severe("Ungrouped world " + worldName + " found! Handling as a separate group.");
-			getLogger().severe("Using server default gamemode of " + group.getDefaultGameMode().name());
+			InventoryGroup group;
 			if (byName.containsKey(worldName)) {
-				getLogger().severe("The unmanaged world " + worldName + " will not be added to the world group it shares a name with.");
-				getLogger().severe("This means that plugins will be unable to get this world's group by group name.");
+				getLogger().severe("The ungrouped world " + worldName + " shares a name with a group! It will be added to that group.");
+				getLogger().severe("This is not advisable. Please fix your config!");
+				// TODO might be better to have a different format instead, worldName + "-world" or something
+				group = byName.get(worldName);
 			} else {
-				byName.put(worldName, group);
+				getLogger().severe("Ungrouped world " + worldName + " found! Handling as a separate group.");
+				group = new InventoryGroup(worldName, getServer().getDefaultGameMode());
+				getLogger().severe("Using server default gamemode of " + group.getDefaultGameMode().name());
 			}
+			byName.put(worldName, group);
 			byWorld.put(worldName, group);
 		}
 	}

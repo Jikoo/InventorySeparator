@@ -5,6 +5,7 @@ groups:
     - world
     - world_nether
     - world_the_end
+    - mining_world
   creative:
     gamemode: CREATIVE
     worlds:
