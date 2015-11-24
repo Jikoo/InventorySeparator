@@ -12,13 +12,19 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
  */
 public class PlayerChangedWorldListener implements Listener {
 
+	private final InventorySeparator plugin;
+
+	protected PlayerChangedWorldListener(InventorySeparator plugin) {
+		this.plugin = plugin;
+	}
+
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
 		if (event.getPlayer().hasPermission("inventoryseparator.ignoreinventoryswap")) {
 			return;
 		}
-		InventoryGroup from = InventorySeparator.getInstance().getWorldGroup(event.getFrom().getName());
-		InventoryGroup to = InventorySeparator.getInstance().getWorldGroup(event.getPlayer().getWorld().getName());
+		InventoryGroup from = plugin.getWorldGroup(event.getFrom().getName());
+		InventoryGroup to = plugin.getWorldGroup(event.getPlayer().getWorld().getName());
 		if (from.equals(to)) {
 			if (!event.getPlayer().hasPermission("inventoryseparator.ignoregamemode")
 					&& event.getPlayer().getGameMode() != to.getDefaultGameMode()) {

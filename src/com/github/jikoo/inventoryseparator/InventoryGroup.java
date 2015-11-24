@@ -5,7 +5,10 @@ import java.io.IOException;
 import java.util.UUID;
 
 import org.bukkit.GameMode;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 
 /**
  * A wrapper for managing player data for a group of worlds.
@@ -14,10 +17,12 @@ import org.bukkit.entity.Player;
  */
 public class InventoryGroup {
 
+	private final InventorySeparator plugin;
 	private final String name;
 	private final GameMode gameMode;
 
-	public InventoryGroup(final String name, final GameMode gameMode) {
+	protected InventoryGroup(final InventorySeparator plugin, final String name, final GameMode gameMode) {
+		this.plugin = plugin;
 		this.name = name;
 		this.gameMode = gameMode;
 	}
@@ -30,8 +35,8 @@ public class InventoryGroup {
 		return gameMode;
 	}
 
-	public File getPlayerData(final UUID uuid, final GameMode gameMode) {
-		final File pluginFolder = InventorySeparator.getInstance().getDataFolder();
+	private File getPlayerFile(final UUID uuid, final GameMode gameMode) {
+		final File pluginFolder = plugin.getDataFolder();
 		if (!pluginFolder.exists()) {
 			pluginFolder.mkdirs();
 		}
@@ -39,15 +44,11 @@ public class InventoryGroup {
 		if (!dataFolder.exists()) {
 			dataFolder.mkdir();
 		}
-		final File userFile = new File(pluginFolder, uuid.toString() + "-" + gameMode.name() + ".yml");
-		if (!userFile.exists()) {
-			try {
-				userFile.createNewFile();
-			} catch (IOException e) {
-				InventorySeparator.getInstance().getLogger().severe("Unable to create user data file " + userFile.getPath());
-				e.printStackTrace();
-			}
+		final File groupFolder = new File(dataFolder, getName());
+		if (!groupFolder.exists()) {
+			groupFolder.mkdir();
 		}
+		final File userFile = new File(groupFolder, uuid.toString() + "-" + gameMode.name() + ".yml");
 		return userFile;
 	}
 
@@ -58,11 +59,64 @@ public class InventoryGroup {
 	 * @param player the Player whose inventory is to be changed
 	 * @param gameMode the GameMode to load inventory for
 	 */
-	public void changePlayerInventory(Player player, GameMode gameMode) {
-		// TODO
+	public void changePlayerInventory(final Player player, final GameMode gameMode) {
+		final PlayerInventory inv = player.getInventory();
+		final File userFile = getPlayerFile(player.getUniqueId(), gameMode);
+		if (!userFile.exists()) {
+			inv.clear();
+			inv.setArmorContents(new ItemStack[inv.getArmorContents().length]);
+			return;
+		}
+
+		final YamlConfiguration config = YamlConfiguration.loadConfiguration(userFile);
+
+		ItemStack[] contents = inv.getContents();
+		for (int i = 0; i < contents.length; i++) {
+			contents[i] = config.getItemStack("items." + i);
+		}
+
+		inv.setContents(contents);
+
+		contents = inv.getArmorContents();
+		for (int i = 0; i < contents.length; i++) {
+			contents[i] = config.getItemStack("armor." + i);
+		}
+		inv.setArmorContents(contents);
 	}
 
-	public void savePlayerInventory(Player player) {
-		// TODO
+	public void savePlayerInventory(final Player player) {
+		final PlayerInventory inv = player.getInventory();
+		final YamlConfiguration config = new YamlConfiguration();
+
+		ItemStack[] contents = inv.getContents();
+		for (int i = 0; i < contents.length; i++) {
+			try {
+				config.set("items." + i, contents[i]);
+			} catch (Exception e) {
+				// If an exception is thrown, it's a Spigot serialization issue. Log it and move on.
+				plugin.getLogger().severe(String.format("Unable to save data for %s's %s in slot %s",
+						player.getName(), contents[i].getType(), i));
+				e.printStackTrace();
+			}
+		}
+
+		contents = inv.getArmorContents();
+		for (int i = 0; i < contents.length; i++) {
+			try {
+				config.set("armor." + i, contents[i]);
+			} catch (Exception e) {
+				plugin.getLogger().severe(String.format("Unable to save data for %s's %s in slot %s",
+						player.getName(), contents[i].getType(), i));
+				e.printStackTrace();
+			}
+		}
+
+		final File userFile = getPlayerFile(player.getUniqueId(), player.getGameMode());
+		try {
+			config.save(userFile);
+		} catch (IOException e) {
+			plugin.getLogger().severe("Unable to save user data to " + userFile.getPath());
+			e.printStackTrace();
+		}
 	}
 }

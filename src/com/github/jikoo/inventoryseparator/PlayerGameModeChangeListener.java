@@ -13,6 +13,12 @@ import org.bukkit.event.player.PlayerGameModeChangeEvent;
  */
 public class PlayerGameModeChangeListener implements Listener {
 
+	private final InventorySeparator plugin;
+
+	protected PlayerGameModeChangeListener(InventorySeparator plugin) {
+		this.plugin = plugin;
+	}
+
 	@EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
 	public void onPlayerGameModeChange(PlayerGameModeChangeEvent event) {
 		Player player = event.getPlayer();
@@ -20,7 +26,7 @@ public class PlayerGameModeChangeListener implements Listener {
 				|| player.hasPermission("inventoryseparator.ignoregamemode")) {
 			return;
 		}
-		InventoryGroup group = InventorySeparator.getInstance().getWorldGroup(player.getWorld().getName());
+		InventoryGroup group = plugin.getWorldGroup(player.getWorld().getName());
 		group.savePlayerInventory(player);
 		group.changePlayerInventory(player, event.getNewGameMode());
 	}

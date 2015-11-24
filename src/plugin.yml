@@ -6,7 +6,8 @@ author: Jikoo
 
 commands:
   inventoryseparator:
-    permission: inventoryseparator.use
+    usage: /inventoryseparator reload
+    permission: inventoryseparator.reload
 
 permissions:
   inventoryseparator.ignoregamemode: false

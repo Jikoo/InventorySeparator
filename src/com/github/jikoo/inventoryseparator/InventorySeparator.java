@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.World;
 import org.bukkit.command.Command;
@@ -20,84 +19,101 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public class InventorySeparator extends JavaPlugin {
 
-	private static InventorySeparator instance;
-	private HashMap<String, InventoryGroup> byWorld;
-	private HashMap<String, InventoryGroup> byName;
+	private final HashMap<String, InventoryGroup> byWorld = new HashMap<>(), byName = new HashMap<>();
 
+	@Override
 	public void onEnable() {
-		byWorld = new HashMap<>();
-		byName = new HashMap<>();
-		instance = this;
 		saveDefaultConfig();
 
 		loadGroups();
 
-		getServer().getPluginManager().registerEvents(new PlayerGameModeChangeListener(), this);
+		getServer().getPluginManager().registerEvents(new PlayerGameModeChangeListener(this), this);
+		getServer().getPluginManager().registerEvents(new PlayerChangedWorldListener(this), this);
 	}
 
-	public void onDisable() {
-		instance = null;
-	}
+	@Override
+	public void onDisable() {}
 
-	public static InventorySeparator getInstance() {
-		return instance;
-	}
-
-	public void loadGroups() {
-		final ConfigurationSection groups = getConfig().getConfigurationSection("groups");
-		if (groups == null) {
-			getLogger().warning("No group shares set in config.yml! Assuming separation per-world!");
+	private void loadGroups() {
+		if (getConfig().isConfigurationSection("groups")) {
+			loadConfiguredGroups();
 		} else {
-			for (String groupName : getConfig().getConfigurationSection("groups").getKeys(false)) {
-				groupName = groupName.toLowerCase();
-				try {
-					InventoryGroup group = new InventoryGroup(groupName,
-							GameMode.valueOf(getConfig().getString("groups." + groupName + ".gamemode", "SURVIVAL")));
-					List<String> worlds = getConfig().getStringList("groups." + groupName + ".worlds");
-					boolean hasWorlds = false;
-					for (String worldName : worlds) {
-						World world = Bukkit.getWorld(worldName);
-						if (world == null) {
-							continue;
-						}
-						hasWorlds = true;
-						byWorld.put(worldName.toLowerCase(), group);
-					}
-					if (!hasWorlds) {
-						getLogger().warning("Group " + groupName + " has no applicable worlds!");
-						continue;
-					}
-					byName.put(groupName, group);
-				} catch (Exception e) {
-					// Generic catch-all to stop config mistakes preventing load
-					getLogger().severe("Malformed group " + groupName);
-					e.printStackTrace();
-				}
-			}
+			getLogger().warning("No group shares set in config.yml! Assuming separation per-world!");
 		}
-		// Unmanaged worlds
+
 		for (World world : Bukkit.getWorlds()) {
 			String worldName = world.getName().toLowerCase();
 			if (byWorld.containsKey(worldName)) {
 				continue;
 			}
-			InventoryGroup group;
-			if (byName.containsKey(worldName)) {
-				getLogger().severe("The ungrouped world " + worldName + " shares a name with a group! It will be added to that group.");
-				getLogger().severe("This is not advisable. Please fix your config!");
-				// TODO might be better to have a different format instead, worldName + "-world" or something
-				group = byName.get(worldName);
-			} else {
-				getLogger().severe("Ungrouped world " + worldName + " found! Handling as a separate group.");
-				group = new InventoryGroup(worldName, getServer().getDefaultGameMode());
-				getLogger().severe("Using server default gamemode of " + group.getDefaultGameMode().name());
+			// Unmanaged worlds
+			getWorldGroup(worldName);
+		}
+	}
+
+	private void loadConfiguredGroups() {
+		final ConfigurationSection groups = getConfig().getConfigurationSection("groups");
+		for (String groupName : groups.getKeys(false)) {
+			if (!groups.isConfigurationSection(groupName)) {
+				getLogger().warning("Malformed group " + groupName);
+				continue;
 			}
-			byName.put(worldName, group);
-			byWorld.put(worldName, group);
+
+			final ConfigurationSection group = groups.getConfigurationSection(groupName);
+
+			final List<String> worlds = getConfig().getStringList("worlds");
+			if (worlds.isEmpty()) {
+				getLogger().warning("Group " + groupName + " has no applicable worlds!");
+				continue;
+			}
+
+			groupName = groupName.toLowerCase();
+
+			final GameMode gamemode;
+			if (!group.isString("gamemode")) {
+				gamemode = getServer().getDefaultGameMode();
+				getLogger().severe("Using server default gamemode of " + gamemode.name() + " for " + groupName);
+			} else {
+				String gamemodeName = group.getString("gamemode").toUpperCase();
+				switch (gamemodeName) {
+				case "SURVIVAL":
+				case "CREATIVE":
+				case "ADVENTURE":
+				case "SPECTATOR":
+					gamemode = GameMode.valueOf(gamemodeName);
+					break;
+				default:
+					gamemode = getServer().getDefaultGameMode();
+					getLogger().severe("Using server default gamemode of " + gamemode.name() + " for " + groupName);
+					break;
+				}
+			}
+
+			InventoryGroup invGroup = new InventoryGroup(this, groupName, gamemode);
+
+			for (String worldName : worlds) {
+				byWorld.put(worldName.toLowerCase(), invGroup);
+			}
+			byName.put(groupName, invGroup);
 		}
 	}
 
 	public InventoryGroup getWorldGroup(String worldName) {
+		worldName = worldName.toLowerCase();
+		if (!byWorld.containsKey(worldName)) {
+			final InventoryGroup group;
+			if (byName.containsKey(worldName)) {
+				getLogger().severe("The ungrouped world " + worldName + " shares a name with a group! It will be added to that group.");
+				getLogger().severe("This is not advisable. Please fix your config!");
+				group = byName.get(worldName);
+			} else {
+				getLogger().severe("Ungrouped world " + worldName + " found! Handling as a separate group.");
+				group = new InventoryGroup(this, worldName, getServer().getDefaultGameMode());
+				getLogger().severe("Using server default gamemode of " + group.getDefaultGameMode().name());
+				byName.put(worldName, group);
+			}
+			byWorld.put(worldName, group);
+		}
 		return byWorld.get(worldName.toLowerCase());
 	}
 
@@ -111,8 +127,14 @@ public class InventorySeparator extends JavaPlugin {
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		// TODO
-		sender.sendMessage(ChatColor.RED + "This isn't a thing yet.");
+		if (args.length < 1 || !args[0].equalsIgnoreCase("reload")) {
+			return false;
+		}
+		reloadConfig();
+		byWorld.clear();
+		byName.clear();
+		loadGroups();
+		sender.sendMessage("Configuration reloaded!");
 		return true;
 	}
 }
