@@ -5,10 +5,13 @@ import java.io.IOException;
 import java.util.UUID;
 
 import org.bukkit.GameMode;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 /**
  * A wrapper for managing player data for a group of worlds.
@@ -82,6 +85,35 @@ public class InventoryGroup {
 			contents[i] = config.getItemStack("armor." + i);
 		}
 		inv.setArmorContents(contents);
+
+		player.setHealth(config.getDouble("health", 20));
+		player.setFoodLevel(config.getInt("food", 20));
+		// TODO: Will this work? Should I just get and cast?
+		player.setSaturation((float) config.getDouble("saturation", 20));
+		player.setLevel(config.getInt("level", 0));
+		// TODO: see above, functional, necessary?
+		player.setExp((float) config.getDouble("levelProgress", 0));
+		player.setFireTicks(config.getInt("fireTicks", 0));
+		// TODO another float
+		player.setFallDistance((float) config.getDouble("fallDistance", 0));
+
+		for (PotionEffect effect : player.getActivePotionEffects()) {
+			// This is safe - the Collection of potion effects is a copy.
+			// It's also mutable, if it comes down to it.
+			player.removePotionEffect(effect.getType());
+		}
+
+		final ConfigurationSection potions = config.createSection("potions");
+		for (String effectName : config.getKeys(false)) {
+			final PotionEffectType type = PotionEffectType.getByName(effectName);
+			if (type == null) {
+				continue;
+			}
+			final PotionEffect potion = new PotionEffect(type,
+					potions.getInt(effectName + ".duration"),
+					potions.getInt(effectName + ".amplifier"));
+			player.addPotionEffect(potion, true);
+		}
 	}
 
 	public void savePlayerInventory(final Player player) {
@@ -93,7 +125,7 @@ public class InventoryGroup {
 			try {
 				config.set("items." + i, contents[i]);
 			} catch (Exception e) {
-				// If an exception is thrown, it's a Spigot serialization issue. Log it and move on.
+				// If an exception is thrown, it's probably a Spigot serialization issue. Log it and move on.
 				plugin.getLogger().severe(String.format("Unable to save data for %s's %s in slot %s",
 						player.getName(), contents[i].getType(), i));
 				e.printStackTrace();
@@ -109,6 +141,24 @@ public class InventoryGroup {
 						player.getName(), contents[i].getType(), i));
 				e.printStackTrace();
 			}
+		}
+
+		config.set("health", player.getHealth());
+		config.set("food", player.getFoodLevel());
+		// TODO: Does this work? Is the cast needed?
+		config.set("saturation", (double) player.getSaturation());
+		config.set("level", player.getLevel());
+		// TODO see above
+		config.set("levelProgress", (double) player.getExp());
+		config.set("fireTicks", player.getFireTicks());
+		// TODO another float
+		config.set("fallDistance", player.getFallDistance());
+
+		final ConfigurationSection potions = config.createSection("potions");
+		for (PotionEffect effect : player.getActivePotionEffects()) {
+			final String type = effect.getType().getName();
+			potions.set(type + ".duration", effect.getDuration());
+			potions.set(type + ".amplifier", effect.getAmplifier());
 		}
 
 		final File userFile = getPlayerFile(player.getUniqueId(), player.getGameMode());
