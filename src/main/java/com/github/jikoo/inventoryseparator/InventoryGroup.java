@@ -2,8 +2,6 @@ package com.github.jikoo.inventoryseparator;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.UUID;
 
 import org.bukkit.GameMode;
@@ -21,21 +19,6 @@ import org.bukkit.potion.PotionEffectType;
  * @author Jikoo
  */
 public class InventoryGroup {
-
-	private static final Method GET_ITEM_IN_OFF_HAND, SET_ITEM_IN_OFF_HAND;
-
-	static {
-		Method get, set;
-		try {
-			get = Player.class.getMethod("getItemInOffHand");
-			set = Player.class.getMethod("setItemInOffHand", ItemStack.class);
-		} catch (NoSuchMethodException | SecurityException e) {
-			get = set = null;
-		}
-		// Yay, final modifier and try/catch.
-		GET_ITEM_IN_OFF_HAND = get;
-		SET_ITEM_IN_OFF_HAND = set;
-	}
 
 	private final InventorySeparator plugin;
 	private final String name;
@@ -103,14 +86,7 @@ public class InventoryGroup {
 		}
 		inv.setArmorContents(contents);
 
-		if (SET_ITEM_IN_OFF_HAND != null) {
-			try {
-				SET_ITEM_IN_OFF_HAND.invoke(player, config.getItemStack("offhand"));
-			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-				plugin.getLogger().severe("Unable to invoke Player#setItemInOffHand");
-				e.printStackTrace();
-			}
-		}
+		player.getInventory().setItemInOffHand(config.getItemStack("offhand"));
 
 		player.setHealth(config.getDouble("health", 20));
 		player.setFoodLevel(config.getInt("food", 20));
@@ -169,18 +145,9 @@ public class InventoryGroup {
 			}
 		}
 
-		if (GET_ITEM_IN_OFF_HAND != null) {
-			try {
-				config.set("offhand", GET_ITEM_IN_OFF_HAND.invoke(player));
-			} catch (Exception e) {
-				plugin.getLogger().severe(String.format("Unable to save data for %s's off hand item",
-						player.getName()));
-				// Catch generic exception in case of Spigot serialization issue.
-				e.printStackTrace();
-			}
-		}
+		config.set("offhand", player.getInventory().getItemInOffHand());
 
-		config.set("health", player.getHealth());
+				config.set("health", player.getHealth());
 		config.set("food", player.getFoodLevel());
 		// TODO: Does this work? Is the cast needed?
 		config.set("saturation", (double) player.getSaturation());
