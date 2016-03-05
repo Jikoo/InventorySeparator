@@ -86,7 +86,11 @@ public class InventoryGroup {
 		}
 		inv.setArmorContents(contents);
 
-		player.getInventory().setItemInOffHand(config.getItemStack("offhand"));
+		try {
+			inv.setItemInOffHand(config.getItemStack("offhand"));
+		} catch (NoSuchMethodError e) {
+			// 1.8 or lower
+		}
 
 		player.setHealth(config.getDouble("health", 20));
 		player.setFoodLevel(config.getInt("food", 20));
@@ -145,9 +149,18 @@ public class InventoryGroup {
 			}
 		}
 
-		config.set("offhand", player.getInventory().getItemInOffHand());
+		try {
+			config.set("offhand", inv.getItemInOffHand());
+		} catch (NoSuchMethodError e) {
+			// 1.8 or lower
+		} catch (Exception e) {
+			// If any other exception is thrown, it's probably a Spigot serialization issue. Log it and move on.
+			plugin.getLogger().severe(String.format("Unable to save data for %s's offhand slot",
+					player.getName()));
+			e.printStackTrace();
+		}
 
-				config.set("health", player.getHealth());
+		config.set("health", player.getHealth());
 		config.set("food", player.getFoodLevel());
 		// TODO: Does this work? Is the cast needed?
 		config.set("saturation", (double) player.getSaturation());
