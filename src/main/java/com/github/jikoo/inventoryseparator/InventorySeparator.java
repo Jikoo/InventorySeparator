@@ -61,7 +61,7 @@ public class InventorySeparator extends JavaPlugin {
 
 			final ConfigurationSection group = groups.getConfigurationSection(groupName);
 
-			final List<String> worlds = getConfig().getStringList("worlds");
+			final List<String> worlds = group.getStringList("worlds");
 			if (worlds.isEmpty()) {
 				getLogger().warning("Group " + groupName + " has no applicable worlds!");
 				continue;
