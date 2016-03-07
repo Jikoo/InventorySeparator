@@ -10,5 +10,7 @@ commands:
     permission: inventoryseparator.reload
 
 permissions:
-  inventoryseparator.ignoregamemode: false
-  inventoryseparator.ignoreinventoryswap: false
+  inventoryseparator.ignoregamemode:
+    default: false
+  inventoryseparator.ignoreinventoryswap:
+    default: false
