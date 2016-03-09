@@ -78,7 +78,7 @@ public class InventoryGroup {
 			contents[i] = config.getItemStack("items." + i);
 		}
 
-		inv.setContents(contents);
+		this.setContents(inv, contents);
 
 		contents = inv.getArmorContents();
 		for (int i = 0; i < contents.length; i++) {
@@ -126,7 +126,7 @@ public class InventoryGroup {
 		final PlayerInventory inv = player.getInventory();
 		final YamlConfiguration config = new YamlConfiguration();
 
-		ItemStack[] contents = inv.getContents();
+		ItemStack[] contents = this.getContents(inv);
 		for (int i = 0; i < contents.length; i++) {
 			try {
 				config.set("items." + i, contents[i]);
@@ -184,6 +184,22 @@ public class InventoryGroup {
 		} catch (IOException e) {
 			plugin.getLogger().severe("Unable to save user data to " + userFile.getPath());
 			e.printStackTrace();
+		}
+	}
+
+	private ItemStack[] getContents(PlayerInventory inventory) {
+		try {
+			return inventory.getStorageContents();
+		} catch (NoSuchMethodError e) {
+			return inventory.getContents();
+		}
+	}
+
+	private void setContents(PlayerInventory inventory, ItemStack[] contents) {
+		try {
+			inventory.setStorageContents(contents);
+		} catch (NoSuchMethodError e) {
+			inventory.setContents(contents);
 		}
 	}
 }
