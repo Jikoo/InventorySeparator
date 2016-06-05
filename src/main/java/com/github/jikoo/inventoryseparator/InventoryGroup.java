@@ -63,11 +63,17 @@ public class InventoryGroup {
 	 * @param gameMode the GameMode to load inventory for
 	 */
 	public void changePlayerInventory(final Player player, final GameMode gameMode) {
+
+		for (PotionEffect effect : player.getActivePotionEffects()) {
+			// This is safe - the Collection of potion effects is a copy.
+			player.removePotionEffect(effect.getType());
+		}
+
 		final PlayerInventory inv = player.getInventory();
 		final File userFile = getPlayerFile(player.getUniqueId(), gameMode);
+
 		if (!userFile.exists()) {
 			inv.clear();
-			inv.setArmorContents(new ItemStack[inv.getArmorContents().length]);
 			return;
 		}
 
@@ -78,19 +84,7 @@ public class InventoryGroup {
 			contents[i] = config.getItemStack("items." + i);
 		}
 
-		this.setContents(inv, contents);
-
-		contents = inv.getArmorContents();
-		for (int i = 0; i < contents.length; i++) {
-			contents[i] = config.getItemStack("armor." + i);
-		}
-		inv.setArmorContents(contents);
-
-		try {
-			inv.setItemInOffHand(config.getItemStack("offhand"));
-		} catch (NoSuchMethodError e) {
-			// 1.8 or lower
-		}
+		inv.setContents(contents);
 
 		player.setHealth(config.getDouble("health", 20));
 		player.setFoodLevel(config.getInt("food", 20));
@@ -102,12 +96,6 @@ public class InventoryGroup {
 		player.setFireTicks(config.getInt("fireTicks", 0));
 		// TODO another float
 		player.setFallDistance((float) config.getDouble("fallDistance", 0));
-
-		for (PotionEffect effect : player.getActivePotionEffects()) {
-			// This is safe - the Collection of potion effects is a copy.
-			// It's also mutable, if it comes down to it.
-			player.removePotionEffect(effect.getType());
-		}
 
 		final ConfigurationSection potions = config.createSection("potions");
 		for (String effectName : config.getKeys(false)) {
@@ -126,7 +114,7 @@ public class InventoryGroup {
 		final PlayerInventory inv = player.getInventory();
 		final YamlConfiguration config = new YamlConfiguration();
 
-		ItemStack[] contents = this.getContents(inv);
+		ItemStack[] contents = inv.getContents();
 		for (int i = 0; i < contents.length; i++) {
 			try {
 				config.set("items." + i, contents[i]);
@@ -136,28 +124,6 @@ public class InventoryGroup {
 						player.getName(), contents[i].getType(), i));
 				e.printStackTrace();
 			}
-		}
-
-		contents = inv.getArmorContents();
-		for (int i = 0; i < contents.length; i++) {
-			try {
-				config.set("armor." + i, contents[i]);
-			} catch (Exception e) {
-				plugin.getLogger().severe(String.format("Unable to save data for %s's %s in slot %s",
-						player.getName(), contents[i].getType(), i));
-				e.printStackTrace();
-			}
-		}
-
-		try {
-			config.set("offhand", inv.getItemInOffHand());
-		} catch (NoSuchMethodError e) {
-			// 1.8 or lower
-		} catch (Exception e) {
-			// If any other exception is thrown, it's probably a Spigot serialization issue. Log it and move on.
-			plugin.getLogger().severe(String.format("Unable to save data for %s's offhand slot",
-					player.getName()));
-			e.printStackTrace();
 		}
 
 		config.set("health", player.getHealth());
@@ -184,22 +150,6 @@ public class InventoryGroup {
 		} catch (IOException e) {
 			plugin.getLogger().severe("Unable to save user data to " + userFile.getPath());
 			e.printStackTrace();
-		}
-	}
-
-	private ItemStack[] getContents(PlayerInventory inventory) {
-		try {
-			return inventory.getStorageContents();
-		} catch (NoSuchMethodError e) {
-			return inventory.getContents();
-		}
-	}
-
-	private void setContents(PlayerInventory inventory, ItemStack[] contents) {
-		try {
-			inventory.setStorageContents(contents);
-		} catch (NoSuchMethodError e) {
-			inventory.setContents(contents);
 		}
 	}
 }
