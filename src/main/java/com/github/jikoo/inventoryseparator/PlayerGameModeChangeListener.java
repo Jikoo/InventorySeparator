@@ -15,18 +15,18 @@ public class PlayerGameModeChangeListener implements Listener {
 
 	private final InventorySeparator plugin;
 
-	protected PlayerGameModeChangeListener(InventorySeparator plugin) {
+	protected PlayerGameModeChangeListener(final InventorySeparator plugin) {
 		this.plugin = plugin;
 	}
 
 	@EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-	public void onPlayerGameModeChange(PlayerGameModeChangeEvent event) {
-		Player player = event.getPlayer();
+	public void onPlayerGameModeChange(final PlayerGameModeChangeEvent event) {
+		final Player player = event.getPlayer();
 		if (player.hasPermission("inventoryseparator.ignoreinventoryswap")
 				|| player.hasPermission("inventoryseparator.ignoregamemode")) {
 			return;
 		}
-		InventoryGroup group = plugin.getWorldGroup(player.getWorld().getName());
+		final InventoryGroup group = this.plugin.getWorldGroup(player.getWorld().getName());
 		group.savePlayerInventory(player);
 		group.changePlayerInventory(player, event.getNewGameMode());
 	}

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -38,7 +39,7 @@ public class InventoryGroup {
 		return gameMode;
 	}
 
-	private File getPlayerFile(final UUID uuid, final GameMode gameMode) {
+	private File getGroupFile() {
 		final File pluginFolder = plugin.getDataFolder();
 		if (!pluginFolder.exists()) {
 			pluginFolder.mkdirs();
@@ -51,8 +52,43 @@ public class InventoryGroup {
 		if (!groupFolder.exists()) {
 			groupFolder.mkdir();
 		}
-		final File userFile = new File(groupFolder, uuid.toString() + "-" + gameMode.name() + ".yml");
-		return userFile;
+		return groupFolder;
+	}
+
+	private File getGenericFile(final UUID uuid) {
+		return new File(getGroupFile(), uuid.toString() + ".yml");
+	}
+
+	private File getPlayerFile(final UUID uuid, final GameMode gameMode) {
+		return new File(getGroupFile(), uuid.toString() + "-" + gameMode.name() + ".yml");
+	}
+
+	public GameMode getLastGameMode(UUID uuid) {
+
+		final Player player = Bukkit.getPlayer(uuid);
+		if (player != null && plugin.getWorldGroup(player.getWorld().getName()).equals(this)) {
+			return player.getGameMode();
+		}
+
+		final File playerFile = getGenericFile(uuid);
+
+		if (!playerFile.exists()) {
+			return this.getDefaultGameMode();
+		}
+
+		final YamlConfiguration config = YamlConfiguration.loadConfiguration(getGenericFile(uuid));
+
+		final String gameMode = config.getString("lastGameMode");
+
+		if (gameMode == null) {
+			return this.getDefaultGameMode();
+		}
+
+		try {
+			return GameMode.valueOf(gameMode);
+		} catch (IllegalArgumentException e) {
+			return this.getDefaultGameMode();
+		}
 	}
 
 	/**
@@ -146,7 +182,6 @@ public class InventoryGroup {
 		config.set("fireTicks", player.getFireTicks());
 		config.set("fallDistance", player.getFallDistance());
 
-		config.set("potions", null);
 		final ConfigurationSection potions = config.createSection("potions");
 		for (PotionEffect effect : player.getActivePotionEffects()) {
 			final String type = effect.getType().getName();
@@ -162,6 +197,15 @@ public class InventoryGroup {
 			config.save(userFile);
 		} catch (IOException e) {
 			plugin.getLogger().severe("Unable to save user data to " + userFile.getPath());
+			e.printStackTrace();
+		}
+
+		final YamlConfiguration genericData = new YamlConfiguration();
+		genericData.set("lastGameMode", player.getGameMode().name());
+		try {
+			genericData.save(getGenericFile(player.getUniqueId()));
+		} catch (IOException e) {
+			plugin.getLogger().severe("Unable to save generic user data to " + userFile.getPath());
 			e.printStackTrace();
 		}
 	}

@@ -11,6 +11,12 @@ commands:
 
 permissions:
   inventoryseparator.ignoregamemode:
+    description: Ignore gamemode forcing.
     default: false
+    children:
+      inventoryseparator.uselastgamemode:
+        description: Use last gamemode on a per-group basis.
+        default: op
   inventoryseparator.ignoreinventoryswap:
+    description: Ignore inventory swapping per-gamemode.
     default: false

@@ -27,8 +27,9 @@ public class InventorySeparator extends JavaPlugin {
 
 		loadGroups();
 
-		getServer().getPluginManager().registerEvents(new PlayerGameModeChangeListener(this), this);
 		getServer().getPluginManager().registerEvents(new PlayerChangedWorldListener(this), this);
+		getServer().getPluginManager().registerEvents(new PlayerGameModeChangeListener(this), this);
+		getServer().getPluginManager().registerEvents(new PlayerQuitListener(this), this);
 	}
 
 	@Override
@@ -69,23 +70,18 @@ public class InventorySeparator extends JavaPlugin {
 
 			groupName = groupName.toLowerCase();
 
-			final GameMode gamemode;
+			GameMode gamemode;
 			if (!group.isString("gamemode")) {
 				gamemode = getServer().getDefaultGameMode();
 				getLogger().severe("Using server default gamemode of " + gamemode.name() + " for " + groupName);
 			} else {
 				String gamemodeName = group.getString("gamemode").toUpperCase();
-				switch (gamemodeName) {
-				case "SURVIVAL":
-				case "CREATIVE":
-				case "ADVENTURE":
-				case "SPECTATOR":
+
+				try {
 					gamemode = GameMode.valueOf(gamemodeName);
-					break;
-				default:
+				} catch (IllegalArgumentException e) {
 					gamemode = getServer().getDefaultGameMode();
 					getLogger().severe("Using server default gamemode of " + gamemode.name() + " for " + groupName);
-					break;
 				}
 			}
 
