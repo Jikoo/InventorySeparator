@@ -64,11 +64,13 @@ public class InventoryGroup {
 	 */
 	public void changePlayerInventory(final Player player, final GameMode gameMode) {
 
-		for (PotionEffect effect : player.getActivePotionEffects()) {
-			// This is safe - the Collection of potion effects is a copy.
-			player.removePotionEffect(effect.getType());
+		if (player.isOnline()) {
+			// TODO: If another plugin has loaded a Player, attempting to set potions will cause a NPE
+			for (PotionEffect effect : player.getActivePotionEffects()) {
+				// This is safe - the Collection of potion effects is a copy.
+				player.removePotionEffect(effect.getType());
+			}
 		}
-
 		final PlayerInventory inv = player.getInventory();
 		final File userFile = getPlayerFile(player.getUniqueId(), gameMode);
 
@@ -88,24 +90,34 @@ public class InventoryGroup {
 
 		player.setHealth(config.getDouble("health", 20));
 		player.setFoodLevel(config.getInt("food", 20));
-		// TODO: Will this work? Should I just get and cast?
 		player.setSaturation((float) config.getDouble("saturation", 20));
 		player.setLevel(config.getInt("level", 0));
-		// TODO: see above, functional, necessary?
 		player.setExp((float) config.getDouble("levelProgress", 0));
 		player.setFireTicks(config.getInt("fireTicks", 0));
-		// TODO another float
 		player.setFallDistance((float) config.getDouble("fallDistance", 0));
 
-		final ConfigurationSection potions = config.createSection("potions");
-		for (String effectName : config.getKeys(false)) {
+		if (!player.isOnline()) {
+			// See potions above
+			return;
+		}
+
+		final ConfigurationSection potions = config.getConfigurationSection("potions");
+
+		if (potions == null) {
+			return;
+		}
+
+		for (String effectName : potions.getKeys(false)) {
 			final PotionEffectType type = PotionEffectType.getByName(effectName);
 			if (type == null) {
 				continue;
 			}
 			final PotionEffect potion = new PotionEffect(type,
 					potions.getInt(effectName + ".duration"),
-					potions.getInt(effectName + ".amplifier"));
+					potions.getInt(effectName + ".amplifier"),
+					potions.getBoolean(effectName + ".ambient", true),
+					potions.getBoolean(effectName + ".particles", true),
+					potions.getColor(effectName + ".color"));
 			player.addPotionEffect(potion, true);
 		}
 	}
@@ -128,20 +140,21 @@ public class InventoryGroup {
 
 		config.set("health", player.getHealth());
 		config.set("food", player.getFoodLevel());
-		// TODO: Does this work? Is the cast needed?
 		config.set("saturation", (double) player.getSaturation());
 		config.set("level", player.getLevel());
-		// TODO see above
 		config.set("levelProgress", (double) player.getExp());
 		config.set("fireTicks", player.getFireTicks());
-		// TODO another float
 		config.set("fallDistance", player.getFallDistance());
 
+		config.set("potions", null);
 		final ConfigurationSection potions = config.createSection("potions");
 		for (PotionEffect effect : player.getActivePotionEffects()) {
 			final String type = effect.getType().getName();
 			potions.set(type + ".duration", effect.getDuration());
 			potions.set(type + ".amplifier", effect.getAmplifier());
+			potions.set(type + ".ambient", effect.isAmbient());
+			potions.set(type + ".particles", effect.hasParticles());
+			potions.set(type + ".color", effect.getColor());
 		}
 
 		final File userFile = getPlayerFile(player.getUniqueId(), player.getGameMode());
