@@ -109,12 +109,6 @@ public class InventoryGroup {
 		}
 		final PlayerInventory inv = player.getInventory();
 		final File userFile = getPlayerFile(player.getUniqueId(), gameMode);
-
-		if (!userFile.exists()) {
-			inv.clear();
-			return;
-		}
-
 		final YamlConfiguration config = YamlConfiguration.loadConfiguration(userFile);
 
 		ItemStack[] contents = inv.getContents();
