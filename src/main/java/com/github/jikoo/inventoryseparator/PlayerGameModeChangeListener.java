@@ -22,8 +22,7 @@ public class PlayerGameModeChangeListener implements Listener {
 	@EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
 	public void onPlayerGameModeChange(final PlayerGameModeChangeEvent event) {
 		final Player player = event.getPlayer();
-		if (player.hasPermission("inventoryseparator.ignoreinventoryswap")
-				|| player.hasPermission("inventoryseparator.ignoregamemode")) {
+		if (player.hasPermission("inventoryseparator.ignoreinventoryswap")) {
 			return;
 		}
 		final InventoryGroup group = this.plugin.getWorldGroup(player.getWorld().getName());

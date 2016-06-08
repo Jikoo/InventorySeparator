@@ -29,7 +29,9 @@ public class PlayerChangedWorldListener implements Listener {
 			// PlayerGameModeChangedListener will handle the swap, same group
 			if (!event.getPlayer().hasPermission("inventoryseparator.ignoregamemode")) {
 				event.getPlayer().setGameMode(to.getDefaultGameMode());
-			} else if (event.getPlayer().hasPermission("inventoryseparator.uselastgamemode"))
+			} else if (event.getPlayer().hasPermission("inventoryseparator.uselastgamemode")) {
+				event.getPlayer().setGameMode(to.getLastGameMode(event.getPlayer().getUniqueId()));
+			}
 			return;
 		}
 		if (!event.getPlayer().hasPermission("inventoryseparator.ignoreinventoryswap")) {

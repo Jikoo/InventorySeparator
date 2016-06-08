@@ -18,5 +18,5 @@ permissions:
         description: Use last gamemode on a per-group basis.
         default: op
   inventoryseparator.ignoreinventoryswap:
-    description: Ignore inventory swapping per-gamemode.
+    description: Ignore inventory swapping per-gamemode and per-group.
     default: false
