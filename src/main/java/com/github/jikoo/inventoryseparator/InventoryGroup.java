@@ -118,6 +118,12 @@ public class InventoryGroup {
 
 		inv.setContents(contents);
 
+		contents = player.getEnderChest().getContents();
+		for (int i = 0; i < contents.length; i++) {
+			contents[i] = config.getItemStack("enderchest." + i);
+		}
+		player.getEnderChest().setContents(contents);
+
 		player.setHealth(config.getDouble("health", 20));
 		player.setFoodLevel(config.getInt("food", 20));
 		player.setSaturation((float) config.getDouble("saturation", 20));
@@ -163,6 +169,18 @@ public class InventoryGroup {
 			} catch (Exception e) {
 				// If an exception is thrown, it's probably a Spigot serialization issue. Log it and move on.
 				plugin.getLogger().severe(String.format("Unable to save data for %s's %s in slot %s",
+						player.getName(), contents[i].getType(), i));
+				e.printStackTrace();
+			}
+		}
+
+		contents = player.getEnderChest().getContents();
+		for (int i = 0; i < contents.length; i++) {
+			try {
+				config.set("enderchest." + i, contents[i]);
+			} catch (Exception e) {
+				// If an exception is thrown, it's probably a Spigot serialization issue. Log it and move on.
+				plugin.getLogger().severe(String.format("Unable to save data for %s's %s in enderchest slot %s",
 						player.getName(), contents[i].getType(), i));
 				e.printStackTrace();
 			}
