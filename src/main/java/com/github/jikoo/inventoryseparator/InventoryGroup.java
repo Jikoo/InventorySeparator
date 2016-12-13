@@ -124,13 +124,13 @@ public class InventoryGroup {
 		}
 		player.getEnderChest().setContents(contents);
 
-		player.setHealth(config.getDouble("health", 20));
-		player.setFoodLevel(config.getInt("food", 20));
-		player.setSaturation((float) config.getDouble("saturation", 20));
-		player.setLevel(config.getInt("level", 0));
-		player.setExp((float) config.getDouble("levelProgress", 0));
-		player.setFireTicks(config.getInt("fireTicks", 0));
-		player.setFallDistance((float) config.getDouble("fallDistance", 0));
+		player.setHealth(Math.max(0, Math.min(20, config.getDouble("health", 20))));
+		player.setFoodLevel(Math.max(0, Math.min(20, config.getInt("food", 20))));
+		player.setSaturation((float) Math.max(0, Math.min(20, config.getDouble("saturation", 20))));
+		player.setLevel(Math.max(0, config.getInt("level", 0)));
+		player.setExp((float) Math.max(0, Math.min(1, config.getDouble("levelProgress", 0))));
+		player.setFireTicks(Math.max(0, config.getInt("fireTicks", 0)));
+		player.setFallDistance((float) Math.max(0, config.getDouble("fallDistance", 0)));
 
 		if (!player.isOnline()) {
 			// See potions above
