@@ -3,6 +3,7 @@ name: InventorySeparator
 main: com.github.jikoo.inventoryseparator.InventorySeparator
 version: 1.0.0
 author: Jikoo
+api-version: 1.13
 
 commands:
   inventoryseparator:
