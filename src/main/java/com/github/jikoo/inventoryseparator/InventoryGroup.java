@@ -16,7 +16,7 @@ import org.bukkit.potion.PotionEffectType;
 
 /**
  * A wrapper for managing player data for a group of worlds.
- * 
+ *
  * @author Jikoo
  */
 public class InventoryGroup {
@@ -94,7 +94,7 @@ public class InventoryGroup {
 	/**
 	 * Change a player's inventory to another GameMode's inventory.
 	 * N.B. This does not save their current inventory!
-	 * 
+	 *
 	 * @param player the Player whose inventory is to be changed
 	 * @param gameMode the GameMode to load inventory for
 	 */
@@ -153,7 +153,7 @@ public class InventoryGroup {
 					potions.getInt(effectName + ".amplifier"),
 					potions.getBoolean(effectName + ".ambient", true),
 					potions.getBoolean(effectName + ".particles", true),
-					potions.getColor(effectName + ".color"));
+					potions.getBoolean(effectName + ".icon", false));
 			player.addPotionEffect(potion, true);
 		}
 	}
@@ -201,7 +201,7 @@ public class InventoryGroup {
 			potions.set(type + ".amplifier", effect.getAmplifier());
 			potions.set(type + ".ambient", effect.isAmbient());
 			potions.set(type + ".particles", effect.hasParticles());
-			potions.set(type + ".color", effect.getColor());
+			potions.set(type + ".icon", effect.hasIcon());
 		}
 
 		final File userFile = getPlayerFile(player.getUniqueId(), player.getGameMode());
